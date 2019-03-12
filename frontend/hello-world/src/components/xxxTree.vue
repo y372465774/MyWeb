@@ -1,10 +1,14 @@
 <template>
     <div>
+        <!-- <el-button type="success" round style="float:left;" v-on:click="synMind" >同步</el-button> -->
+        <el-row>
+            <el-button type="primary" v-on:click="synMind" style="float:left;">主要按钮</el-button>
+        </el-row>
         <div id="mytreeid" class="mytree"> </div>
-        <el-menu id="rightMenu" style="width: 200px;">
-            <el-menu-item >添加子元素</el-menu-item>
-            <el-menu-item>修改名称</el-menu-item>
-            <el-menu-item>添加备注</el-menu-item>
+        <el-menu id="rightMenu" style="width: 150px; display: none;">
+            <el-menu-item v-on:click="addItem" class="myitem">添加子元素</el-menu-item>
+            <el-menu-item v-on:click="moifyItem" class="myitem">修改内容</el-menu-item>
+            <el-menu-item v-on:click="addMark" class="myitem">添加备注</el-menu-item>
         </el-menu>
     </div>
 </template>
@@ -18,15 +22,15 @@ let local_data = {
     children:[
         {
             iname:'二级1', 
-            uqid:2,
+            uqid:21,
             children:[
-                {iname:'三级1', uqid: 11},   
-                {iname:'三级2', uqid: 12}   
+                {iname:'三级1', uqid: 211},   
+                {iname:'三级2', uqid: 212}   
             ]
         },
         {
             iname:'二级2', 
-            uqid:2
+            uqid:22
         }
     ]
 }
@@ -46,6 +50,11 @@ function treeVisitor(root, target_uqid){
 }
 let scope = {}
 
+let disappearMenu =  () => {
+    let rightMenu = window.document.getElementById("rightMenu")
+    rightMenu.style.display = 'none';
+}
+
 export default {
     name: 'xxxTree',
     data(){
@@ -57,6 +66,42 @@ export default {
         this.drawTree();
     },
     methods:{
+        addItem(event){
+            disappearMenu();
+            logutil.log(scope.current_data);
+            let pointer = treeVisitor(local_data, scope.current_data.uqid);
+            if(!pointer.children){
+                pointer.children = [];
+            }
+            let nw = Date.now();
+            pointer.children.push({iname:nw, uqid: nw});
+            logutil.log(pointer, local_data, nw);
+            this.refreshTree();
+        },
+        moifyItem(){
+            disappearMenu();
+            let pointer = treeVisitor(local_data, scope.current_data.uqid);
+            this.$prompt('内容输入', '提示', {
+                confirmButtonText: '确定',
+                cancelButtonText: '取消',
+                //inputPattern: /[\w!#$%&'*+/=?^_`{|}~-]+(?:\.[\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\w](?:[\w-]*[\w])?\.)+[\w](?:[\w-]*[\w])?/,
+                //inputErrorMessage: '邮箱格式不正确'
+            }).then(({ value }) => {
+                pointer.iname = value;
+                this.refreshTree();
+            }).catch(() => {
+                this.$message({
+                    type: 'info',
+                    message: '取消输入'
+                });       
+            });
+        },
+        addMark(){
+            disappearMenu();
+        },
+        synMind(){
+            alert("同步成功");
+        },
         setMyChart(){
             let tree = window.document.getElementById("mytreeid");
             let myChart = this.$echarts.init(tree);
@@ -75,15 +120,16 @@ export default {
                 let x = event.offsetX + 300;
                 let y = event.offsetY
                 let rightMenu = window.document.getElementById("rightMenu")
+                rightMenu.style.display = 'block';
                 rightMenu.style.position = 'absolute';
                 rightMenu.style.top = y + 'px';
-                rightMenu.style.left = x + 'px';
+                rightMenu.style.left = 30+ x + 'px';
                 rightMenu.style.zIndex = 999999;
             }
             let myChart = this.getMyChart();
             myChart.on('contextmenu', (params) => {
-                logutil.log(local_data);
-                logutil.log(params.data);
+                //logutil.log(local_data);
+                //logutil.log(params.data);
                 params.event.event.preventDefault()
                 if (params.componentType === 'series') {
                     if(params.seriesType == 'tree'){
@@ -94,6 +140,7 @@ export default {
         },
         drawTree(){
             logutil.log(this.$route.params.api);
+            local_data.iname = this.$route.params.api;
             this.setMyChart();
             this.addEventHanderForEChart();
             this.refreshTree();
@@ -120,5 +167,9 @@ export default {
        width: 1500px;
        height: 800px;
    } 
+   .myitem{
+       height: 40px;
+       line-height: 40px;
+   }
 </style>
 

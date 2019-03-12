@@ -9,7 +9,7 @@ function get_base_option_with_data(data){
         series: [
             {
                 type: 'tree',
-
+                initialTreeDepth:undefined,
                 data: [data],
 
                 top: '1%',
